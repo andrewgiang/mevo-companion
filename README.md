@@ -1,3 +1,20 @@
+# Mevo Companion
+
+A Windows companion for **Mevo+ and GSPro**, built on the original [Springbok connector](https://github.com/springbok/MLM2PRO-GSPro-Connector).
+
+- Native C# / WPF interface with guided setup and automatic connection.
+- Reads FS Golf PC 2.0 measurements directly, without drawing OCR boxes.
+- Uses FS Golf Play Mode and automatically selects Chipping within 20 yards of the pin.
+- Preserves Springbok's original webcam putting engine and settings.
+
+**Start with the [Mevo Companion setup and build guide](README-COMPANION.md).** See the [validation notes](docs/validation.md) for tested behavior and remaining hardware checks.
+
+This is a development fork. Real Mevo+ full shots, chips, and automatic mode switching have been verified on the test setup. Webcam putting delivery and unattended startup still need physical validation. GSPro and FS Golf are installed separately. The project retains the GPL-3.0 license and [third-party attribution](THIRD-PARTY-NOTICES.md).
+
+The original connector source and documentation are retained below.
+
+---
+
 # MLM2PRO-GSPro-Connector
 GSPro connector for the MLM2Pro & Mevo+ Launch Monitors that includes Webcam or ExPutt putting.
 

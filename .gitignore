@@ -167,3 +167,22 @@ mlm2pro_bt_app/
 r10_bt_app/
 src/bluetooth/mlm2pro_secret.py
 nuitka-build/
+# Mevo Companion local environments and build outputs
+.venv/
+.tooling/
+**/bin/
+**/obj/
+build/
+dist/
+artifacts/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.log
+!MevoCompanionEngine.spec
+
+# Required stock putting assets and corresponding source (not user profiles)
+!vendor/springbok-putting/config-defaults.ini
+!vendor/springbok-putting/error.png
+!vendor/springbok-putting/source/config-defaults.ini
+!vendor/springbok-putting/source/ball_tracking.spec

@@ -1,0 +1,33 @@
+<Window x:Class="MevoCompanion.Setup.SetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mevo Companion Setup" Width="720" Height="590" MinWidth="660" MinHeight="570"
+        WindowStartupLocation="CenterScreen" Background="#F4F5EF" Foreground="{StaticResource Ink}" FontFamily="Segoe UI">
+  <Grid Margin="36,30">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <StackPanel>
+      <TextBlock Text="MEVO COMPANION" FontSize="12" FontWeight="Bold" Foreground="#567E62" />
+      <TextBlock x:Name="Heading" Text="One home for your next round." FontSize="29" FontWeight="SemiBold" Margin="0,14,0,10" />
+      <TextBlock x:Name="Introduction" Text="Install the Windows companion for GSPro, Mevo+ and your original Springbok webcam putting setup." TextWrapping="Wrap" FontSize="15" LineHeight="23" Foreground="#5A6D65" />
+    </StackPanel>
+    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="24" Margin="0,25,0,24" BorderBrush="#DBE2D7" BorderThickness="1">
+      <StackPanel>
+        <TextBlock Text="JUST FOR THIS WINDOWS ACCOUNT" FontSize="11" FontWeight="Bold" Foreground="#648268" />
+        <TextBlock x:Name="Location" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,18" />
+        <StackPanel x:Name="InstallOptions">
+          <CheckBox x:Name="StartMenu" IsChecked="True" Content="Add to the Start menu" Margin="0,0,0,10" FontSize="14" />
+          <CheckBox x:Name="Desktop" IsChecked="False" Content="Add a desktop shortcut" Margin="0,0,0,16" FontSize="14" />
+        </StackPanel>
+        <TextBlock x:Name="Detail" Text="Your existing equipment settings are preserved. After setup, open the app for a guided connection check." TextWrapping="Wrap" Foreground="#5A6D65" FontSize="13" LineHeight="20" />
+        <ProgressBar x:Name="Progress" Height="5" Minimum="0" Maximum="100" Margin="0,18,0,0" Visibility="Collapsed" Foreground="#347A57" />
+        <TextBlock x:Name="Status" TextWrapping="Wrap" Margin="0,15,0,0" FontSize="13" Foreground="#5A6D65" />
+      </StackPanel>
+    </Border>
+    <Grid Grid.Row="2">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <Button x:Name="RollbackButton" Content="Restore previous version" Click="Rollback_Click" Background="Transparent" BorderThickness="0" Padding="0,10" HorizontalAlignment="Left" Foreground="#356A4B" Visibility="Collapsed" />
+      <Button x:Name="CancelButton" Grid.Column="1" Content="Cancel" Click="Cancel_Click" Background="Transparent" BorderBrush="#CAD5C9" BorderThickness="1" Margin="8,0,10,0" />
+      <Button x:Name="ActionButton" Grid.Column="2" Content="Install companion" Click="Action_Click" Background="#215B3B" Foreground="White" BorderThickness="0" MinWidth="162" />
+    </Grid>
+  </Grid>
+</Window>

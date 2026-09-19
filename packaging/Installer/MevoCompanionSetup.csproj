@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>MevoCompanionSetup</AssemblyName>
+    <AssemblyName Condition="'$(InstallerSmokeBuild)' == 'true'">MevoCompanionSetup.Smoke</AssemblyName>
+    <RootNamespace>MevoCompanion.Setup</RootNamespace>
+    <Version>0.1.0</Version>
+    <Product>Mevo Companion Setup</Product>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PayloadPath Condition="'$(PayloadPath)' == ''">$(MSBuildThisFileDirectory)..\..\dist\MevoCompanion-windows-x64.zip</PayloadPath>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(PayloadPath)') and '$(InstallerSmokeBuild)' != 'true'">
+    <EmbeddedResource Include="$(PayloadPath)" LogicalName="MevoCompanion.Payload.zip" />
+  </ItemGroup>
+  <Target Name="RequireRealPayload" BeforeTargets="PrepareForBuild"
+          Condition="'$(InstallerSmokeBuild)' != 'true' and !Exists('$(PayloadPath)')">
+    <Error Text="Build the real dist/MevoCompanion-windows-x64.zip package first. InstallerSmokeBuild=true produces a disabled development smoke build only." />
+  </Target>
+</Project>

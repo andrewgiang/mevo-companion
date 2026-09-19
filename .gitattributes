@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Preserve the exact upstream bytes recorded in the putting provenance manifest.
+vendor/springbok-putting/** -text

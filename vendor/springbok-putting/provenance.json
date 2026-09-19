@@ -1,0 +1,40 @@
+{
+  "springbok_release": "V1.04.51",
+  "release_url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/releases/download/V1.04.51/MLM2Pro-GSPro-Connector_V1_04_51.zip",
+  "release_sha256": "553c9acaa88f00214266ef4d06cae65989ea60c43fc301be7e4c42ef1dee8d0e",
+  "upstream_project": "https://github.com/alleexx/cam-putting-py",
+  "tracker_tag": "1.6",
+  "tracker_commit": "805ab753aaa1e89d2938679a0ee44866ada0fa45",
+  "license": "GPLv3 (LICENSE included)",
+  "source_verified": {
+    "method": "Full recursive Python code-object equality against compiled pinned source, Python3.11.9",
+    "modules": [
+      "ball_tracking",
+      "ColorModuleExtended"
+    ],
+    "passed": true,
+    "verification_script": "verify_source.py"
+  },
+  "files": {
+    "ball_tracking.exe": "24b8b06bf0b51fd955c74a79c00138268e0ee5e6d20320a071c6ee7f369bc35e",
+    "config-defaults.ini": "2761e674ec5d4589813878390c8df661a7a1fa4dc8784c459d6817eaf6a4e834",
+    "error.png": "7dffa32ddf976731a625b7cc47c928ce90417f111a3266fb50159600152aed5b",
+    "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "Replay1.mp4": "7c14b0ebd2270761c372288a38ebc00629eb24f6d8ed80409c0272f0ea46c942",
+    "source/ball_tracking.py": "f9434aa4ba15e2498d6a09a2b2034bdff29db325a4a3356e396eab6875513e3d",
+    "source/ball_tracking.spec": "a56a86e0828f5e3bba746bcb2cc387f95746ca8c3b29c225a5ec357fcb7965f5",
+    "source/ColorModuleExtended.py": "8ba15e4355df14620c32bacf76c92fd7f9fe4268f6cd6ca7e2ec9c22b2906a91",
+    "source/config-defaults.ini": "3805c5d7a9f7bd2076d374cc38b213f51d6d12b35384e1528d6b2bfaef04a87e",
+    "source/LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "source/readme.md": "bd7e2072e313123410364281ff7e645a3a3c5171fa0648083899be216c0426a8",
+    "source/requirements.txt": "702090da0411cce48962ecd0a46de2e95131044fe9fa7352f2a43f8cb0f49ae4",
+    "verify_source.py": "f4b1e0fffd4b3b9393d36795c96c4cbb2ddcacc32fd1ca5c4a6f08e9ad7a7b6d"
+  },
+  "asset_notes": {
+    "ball_tracking.exe": "Unmodified Springbok V1.04.51 release asset",
+    "error.png": "Unmodified same release asset, required for native splash/error view",
+    "config-defaults.ini": "Unmodified same release default",
+    "Replay1.mp4": "Unmodified Springbok repository root asset; stock tracker opens it on startup"
+  },
+  "hardware_smoke": "HD USB Camera, stock MJPEG=1, live original native view verified with normal Windows desktop access; no physical putt performed"
+}
