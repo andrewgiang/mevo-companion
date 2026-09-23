@@ -78,3 +78,13 @@ def test_play_mode_classifies_practice_shot_from_fs_golf(controller, mode, manua
     assert submitted == [shot]
     value._on_delivery(shot, "accepted", "Accepted by GSPro")
     assert value.store.data["validation"][expected] is True
+
+
+def test_recent_shots_carry_full_measurements_for_the_play_page(controller):
+    value, _, _ = controller
+    shot = Shot("mevo", 120.5, -1.2, vla=14.3, spin_rpm=5200, spin_axis=3.5, club_speed_mph=85.0)
+    value._on_delivery(shot, "accepted", "Accepted by GSPro")
+    latest = value.snapshot()["shots"][0]
+    assert latest["speed"] == 120.5 and latest["hla"] == -1.2
+    assert latest["vla"] == 14.3 and latest["spin_rpm"] == 5200 and latest["spin_axis"] == 3.5
+    assert latest["club_speed"] == 85.0 and latest["state"] == "accepted"

@@ -198,7 +198,7 @@ def test_unreachable_open_connect_explains_address_check(monkeypatch):
     monkeypatch.setattr(socket, "create_connection", timeout)
     client._run()
     assert "Cannot reach GSPro Open Connect at 192.0.2.1:921" in statuses[1][1]
-    assert "Check the address in Connections" in statuses[1][1]
+    assert "Check the address in Settings" in statuses[1][1]
 
 
 def test_monitor_ready_is_change_only_status_without_shot_data_or_number():

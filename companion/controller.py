@@ -369,7 +369,7 @@ class SessionController(QObject):
         path = self.store.data["gspro_path"]
         if not platform.gspro_running():
             if not path:
-                self._apply_health("gspro", "action_needed", "Choose your GSPro application in Connections, or open GSPro yourself")
+                self._apply_health("gspro", "action_needed", "Choose your GSPro application in Settings, or open GSPro yourself")
                 return
             try:
                 platform.launch_app(path)
@@ -390,7 +390,7 @@ class SessionController(QObject):
             self._owned_golf = platform.launch_app(self.store.data["fs_golf_path"])
             self.record("Opening FS Golf")
         except Exception as exc:
-            self._apply_health("mevo", "action_needed", f"Choose the FS Golf application in Connections: {exc}")
+            self._apply_health("mevo", "action_needed", f"Choose the FS Golf application in Settings: {exc}")
 
     def set_chipping(self, enabled):
         if self.chipping != bool(enabled):
@@ -494,7 +494,9 @@ class SessionController(QObject):
         if state not in {"submitted"}:
             self.recent_shots.appendleft({"time": datetime.now().strftime("%H:%M:%S"),
                                          "source": shot.source, "speed": shot.speed_mph,
-                                         "hla": shot.hla, "state": state, "message": message})
+                                         "hla": shot.hla, "vla": shot.vla, "spin_rpm": shot.spin_rpm,
+                                         "spin_axis": shot.spin_axis, "club_speed": shot.club_speed_mph,
+                                         "state": state, "message": message})
         context = self._submission_context.get(shot.event_id)
         if state == "accepted" and context and context["setup"] and context["generation"] == self._generation:
             key = context["validation_key"]

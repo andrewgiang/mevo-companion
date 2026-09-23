@@ -264,7 +264,7 @@ class GSProClient:
                                    "Open its connection window in GSPro; retrying automatically.")
                     else:
                         message = (f"Cannot reach GSPro Open Connect at {self.host}:{self.port}. "
-                                   "Check the address in Connections and that Open Connect is running; retrying automatically.")
+                                   "Check the address in Settings and that Open Connect is running; retrying automatically.")
                     self.on_status("reconnecting", message)
                     log.debug("GSPro transport: %s", exc)
             finally:

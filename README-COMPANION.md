@@ -19,7 +19,7 @@ GSPro and FS Golf must be installed and licensed separately. GSPro must use its 
 ## During play
 
 - Mevo+ supplies full shots. Selecting the putter in GSPro switches to the original Springbok webcam tracker.
-- In FS Golf's **Play Mode**, the companion automatically selects **Chipping** within 20 yards of the pin and **Full Swing** for longer shots. The putter always uses the webcam. Turn off **Automatically switch to Chipping within 20 yards** in Connections to choose the mode yourself. Imported legacy OCR profiles retain the manual **Testing a chip** option.
+- In FS Golf's **Play Mode**, the companion automatically selects **Chipping** within 20 yards of the pin and **Full Swing** for longer shots. The putter always uses the webcam. Turn off **Switch FS Golf to Chipping within 20 yards of the pin** in Settings to choose the mode yourself. Imported legacy OCR profiles retain the manual **Testing a chip** option.
 - **Pause** stops shot forwarding. Disconnects never replay queued shots.
 - Closing the window keeps the tray connection alive. Choose **Quit** from the tray to release the camera and stop the companion. GSPro and FS Golf remain open.
 - **Help** contains connection events and local diagnostic export. Nothing is uploaded automatically.
