@@ -48,9 +48,16 @@
         </ControlTemplate.Triggers>
       </ControlTemplate></Setter.Value></Setter>
     </Style>
-    <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Background" Value="{StaticResource Accent}"/><Setter Property="Foreground" Value="White"/><Setter Property="BorderBrush" Value="{StaticResource Accent}"/></Style>
+    <!-- Declared TextBlock content sits outside the template's ContentPresenter resources, so the application-wide
+         TextBlock style would paint it Ink. Light-on-dark buttons pull their text colour from the button instead. -->
+    <Style x:Key="ButtonForegroundText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/></Style>
+    <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Style.Resources><Style TargetType="TextBlock" BasedOn="{StaticResource ButtonForegroundText}"/></Style.Resources>
+      <Setter Property="Background" Value="{StaticResource Accent}"/><Setter Property="Foreground" Value="White"/><Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
     <Style x:Key="Ghost" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Background" Value="Transparent"/><Setter Property="BorderBrush" Value="Transparent"/><Setter Property="Foreground" Value="{StaticResource Accent}"/><Setter Property="Padding" Value="8,4"/><Setter Property="MinHeight" Value="28"/></Style>
     <Style x:Key="Navigation" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Style.Resources><Style TargetType="TextBlock" BasedOn="{StaticResource ButtonForegroundText}"/></Style.Resources>
       <Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#C4D6CB"/><Setter Property="BorderThickness" Value="0"/>
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Margin" Value="0,2"/><Setter Property="Padding" Value="14,11"/><Setter Property="FontWeight" Value="Normal"/><Setter Property="FontSize" Value="14"/>
     </Style>
