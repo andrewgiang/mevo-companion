@@ -19,7 +19,7 @@ GSPro and FS Golf must be installed and licensed separately. GSPro must use its 
 ## During play
 
 - Mevo+ supplies full shots. Selecting the putter in GSPro switches to the original Springbok webcam tracker.
-- In FS Golf's **Play Mode**, the companion automatically selects **Chipping** within 20 yards of the pin and **Full Swing** for longer shots. The putter always uses the webcam. Turn off **Automatically switch to Chipping within 20 yards** in Connections to choose the mode yourself. Imported legacy OCR profiles retain the manual **Testing a chip** option.
+- In FS Golf's **Play Mode**, the companion automatically selects **Chipping** within 20 yards of the pin and **Full Swing** for longer shots. The putter always uses the webcam. Turn off **Switch FS Golf to Chipping within 20 yards of the pin** in Settings to choose the mode yourself. Imported legacy OCR profiles retain the manual **Testing a chip** option.
 - **Pause** stops shot forwarding. Disconnects never replay queued shots.
 - Closing the window keeps the tray connection alive. Choose **Quit** from the tray to release the camera and stop the companion. GSPro and FS Golf remain open.
 - **Help** contains connection events and local diagnostic export. Nothing is uploaded automatically.
@@ -28,7 +28,7 @@ GSPro and FS Golf must be installed and licensed separately. GSPro must use its 
 
 The supported target is English FS Golf PC 2.0 on the same Windows PC. The native reader uses Windows accessibility controls to read the metric labels and values directly, without OCR boxes. Startup selects **Play Mode** from the recognized Home screen and preserves an existing live session. The reader verifies the selected Full Swing/Chipping mode, live controls and shot freshness. Play Mode's history stops at ten shots; the reader then recognizes a new tracking cycle and settled measurements instead of relying on an increasing counter. Keep the live shot data view available; saved-session reviews are excluded.
 
-Open Connect receives readiness updates as the selected source becomes ready or unavailable. Start the companion before entering a GSPro practice session or round so it receives the initial club update. After reconnecting mid-session, Open Connect may require selecting your current club once in GSPro before shots can resume; the companion explains this when needed. Its displayed club can be stale, so that label is never used to guess the active shot source.
+Open Connect receives readiness updates as the selected source becomes ready or unavailable. Start the companion before entering a GSPro practice session or round so it receives the initial club update. Open Connect reports the club only when it changes, so after connecting the companion assumes a full-swing club and Mevo+ is ready straight away. The first club or distance update from GSPro corrects this; if you connect mid-hole with the putter already selected, reselect it once so the webcam takes over.
 
 Existing Springbok device-region profiles can be imported as an explicit OCR compatibility option. That legacy mode has weaker freshness guarantees and requires keeping the live view open. A different FS Golf version, locale, or unsupported view needs validation before live use. Experimental direct FlightHook support is separate and is not included in this build.
 

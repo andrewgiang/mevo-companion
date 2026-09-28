@@ -42,7 +42,7 @@ def test_stream_handles_fragmented_concatenated_unicode_messages():
 
 def test_router_requires_fresh_matching_source_and_deduplicates():
     router = SourceRouter()
-    assert not router.accept(Shot("mevo", 110, 2))[0]
+    assert not router.accept(Shot("webcam", 4, 0))[0]  # An unknown club routes to Mevo+.
     old = Shot("mevo", 110, 2, captured_at=time.monotonic() - 1)
     router.player("7I")
     assert not router.accept(old)[0]
@@ -52,6 +52,18 @@ def test_router_requires_fresh_matching_source_and_deduplicates():
     assert not router.accept(shot)[0]
     router.player("PT")
     assert router.accept(Shot("webcam", 4, -1))[0]
+
+
+def test_unknown_club_routes_to_mevo_until_gspro_reports_otherwise():
+    router = SourceRouter()
+    router.epoch -= 1  # Connected a second ago.
+    swing = Shot("mevo", 110, 2, captured_at=time.monotonic() - .5)
+    assert router.source == "mevo"
+    router.player("I7")  # GSPro confirming a full-swing club keeps the source.
+    assert router.accept(swing)[0]
+    putt = Shot("webcam", 4, 0, captured_at=time.monotonic() - .5)
+    router.player("PT")
+    assert router.accept(putt) == (False, "An old reading was discarded")
 
 
 def test_router_fences_measurement_start_but_ages_completed_reading():
@@ -198,7 +210,7 @@ def test_unreachable_open_connect_explains_address_check(monkeypatch):
     monkeypatch.setattr(socket, "create_connection", timeout)
     client._run()
     assert "Cannot reach GSPro Open Connect at 192.0.2.1:921" in statuses[1][1]
-    assert "Check the address in Connections" in statuses[1][1]
+    assert "Check the address in Settings" in statuses[1][1]
 
 
 def test_monitor_ready_is_change_only_status_without_shot_data_or_number():
@@ -328,22 +340,18 @@ def test_completed_shot_does_not_claim_ready_while_monitor_is_rearming():
     assert client._not_ready_sent.is_set()
 
 
-def test_connected_without_player_event_stays_not_ready_and_explains_club_selection():
+def test_connected_without_player_event_is_ready_for_mevo():
     server = socket.socket()
     server.bind(("127.0.0.1", 0))
     server.listen()
     received, statuses = [], []
-    select_club = threading.Event()
 
     def simulator():
         conn, _ = server.accept()
         with conn:
             conn.settimeout(.05)
-            stream, selected = JsonStream(), False
+            stream = JsonStream()
             while True:
-                if select_club.is_set() and not selected:
-                    conn.sendall(b'{"Code":201,"Player":{"Club":"I7","Handed":"RH"}}')
-                    selected = True
                 try:
                     data = conn.recv(65536)
                 except socket.timeout:
@@ -360,16 +368,13 @@ def test_connected_without_player_event_stays_not_ready_and_explains_club_select
     try:
         client.set_monitor_ready(True)
         client.start()
-        eventually(lambda: bool(received))
+        eventually(lambda: any(item["ShotDataOptions"]["LaunchMonitorIsReady"] for item in received))
+        assert received[0]["ShotDataOptions"]["LaunchMonitorIsReady"] is False  # Every connection starts Not Ready.
         assert client.router.club is None
-        assert not client.submit(Shot("mevo", 20, 1))
-        assert received[0]["ShotDataOptions"]["LaunchMonitorIsReady"] is False
-        assert any(state == "connected" and "Select your current club once in GSPro" in message
-                   for state, message in statuses)
-        select_club.set()
-        eventually(lambda: client.router.club == "I7")
-        eventually(lambda: statuses[-1] == ("connected", "Connected to GSPro Open Connect"))
-        assert not any("BallData" in item for item in received)
+        assert ("connected", "Connected to GSPro Open Connect") in statuses
+        assert not client.submit(Shot("webcam", 4, 0))
+        assert client.submit(Shot("mevo", 20, 1))
+        eventually(lambda: any("BallData" in item for item in received))
     finally:
         client.stop()
         worker.join(2)

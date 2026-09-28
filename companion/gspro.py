@@ -99,16 +99,22 @@ class SourceRouter:
         if not club or len(club) > 20:
             return False
         with self._lock:
-            changed = self.club != club.upper() or self.handedness != handedness
-            if changed:
+            club = club.upper()
+            changed = self.club != club or self.handedness != handedness
+            # An unknown club already routes to Mevo+. Learning GSPro's
+            # full-swing club later keeps that source, so keep its readings.
+            confirmed = self.club is None and club != "PT" and self.handedness == handedness
+            if changed and not confirmed:
                 self.epoch = time.monotonic()
-            self.club = club.upper()
+            self.club = club
             self.handedness = handedness
             return changed
 
     @property
-    def source(self) -> str | None:
-        return None if self.club is None else ("webcam" if self.club == "PT" else "mevo")
+    def source(self) -> str:
+        # Open Connect reports the club only when it changes, so a new
+        # connection assumes a full-swing club until GSPro says otherwise.
+        return "webcam" if self.club == "PT" else "mevo"
 
     def accept(self, shot: Shot, now: float | None = None) -> tuple[bool, str]:
         now = time.monotonic() if now is None else now
@@ -121,10 +127,7 @@ class SourceRouter:
             if shot.event_id in self.seen:
                 return False, "Duplicate reading ignored"
             self.seen.append(shot.event_id)
-            if self.club is None:
-                return False, "Select your current club in GSPro before taking a shot"
-            expected = "webcam" if self.club == "PT" else "mevo"
-            if shot.source != expected:
+            if shot.source != self.source:
                 return False, "Inactive shot source ignored"
             if capture_start < self.epoch or not 0 <= now - shot.captured_at <= self.max_age:
                 return False, "An old reading was discarded"
@@ -253,7 +256,7 @@ class GSProClient:
                 self._not_ready_sent.clear()
                 self.router.reset()
                 self.connected = True
-                self.on_status("connected", "Connected to Open Connect. Select your current club once in GSPro to enable shots.")
+                self.on_status("connected", "Connected to GSPro Open Connect")
                 self._session(sock)
             except (OSError, ValueError) as exc:
                 if not self._stop.is_set():
@@ -264,7 +267,7 @@ class GSProClient:
                                    "Open its connection window in GSPro; retrying automatically.")
                     else:
                         message = (f"Cannot reach GSPro Open Connect at {self.host}:{self.port}. "
-                                   "Check the address in Connections and that Open Connect is running; retrying automatically.")
+                                   "Check the address in Settings and that Open Connect is running; retrying automatically.")
                     self.on_status("reconnecting", message)
                     log.debug("GSPro transport: %s", exc)
             finally:
@@ -343,7 +346,7 @@ class GSProClient:
             with self._lock:
                 if self._in_flight is not None:
                     continue
-                ready = bool(self._monitor_ready and self._delivery_enabled and self.router.club)
+                ready = bool(self._monitor_ready and self._delivery_enabled)
                 # Every connection starts explicitly Not Ready, including a
                 # reconnect that occurs while the controller is still updating.
                 if last_ready is None or ready != last_ready:
@@ -375,7 +378,7 @@ class GSProClient:
                         if self.router.handedness == "LH" and shot.raw.get("gspro_mirror_for_left_handed"):
                             outgoing = replace(shot, hla=-shot.hla, spin_axis=-shot.spin_axis)
                         message = outgoing.gspro_payload(self._number)
-                        outgoing_ready = bool(self._monitor_ready and self._delivery_enabled and self.router.club)
+                        outgoing_ready = bool(self._monitor_ready and self._delivery_enabled)
                         # A completed measurement may arrive while Mevo+ is
                         # still rearming. Its ball data must not override the
                         # controller's current Not Ready signal.

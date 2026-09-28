@@ -129,7 +129,9 @@ class SessionController(QObject):
         self.event.emit(message)
 
     def snapshot(self):
-        source = "putting" if self.club == "PT" else "mevo" if self.club else None
+        # Until GSPro reports a club (it only does so on a change), assume a
+        # full-swing club so connecting is enough to play.
+        source = "putting" if self.club == "PT" else "mevo"
         active = self.health.get(source, {})
         ready = bool(self.live_enabled and self.health["gspro"]["state"] == "connected"
                      and source and active.get("state") == "ready"
@@ -154,8 +156,6 @@ class SessionController(QObject):
     @Slot(int, str, str, str)
     def _relay_health(self, generation, component, state, message):
         if generation == self._generation and not self._stopping:
-            if component == "mevo" and state == "standby" and not self.club:
-                state, message = "checking", "Waiting for GSPro's current club before enabling Mevo+"
             self._apply_health(component, state, message)
 
     @Slot(int, object)
@@ -358,7 +358,7 @@ class SessionController(QObject):
 
     def update_routing(self):
         if self.source and hasattr(self.source, "set_active"):
-            self.source.set_active(bool(self.club and self.club != "PT") or (self.setup_mode and not self.live_enabled))
+            self.source.set_active(self.club != "PT" or (self.setup_mode and not self.live_enabled))
         if self.putting:
             self.putting.set_active(self.club == "PT" or (self.setup_mode and not self.live_enabled))
 
@@ -369,7 +369,7 @@ class SessionController(QObject):
         path = self.store.data["gspro_path"]
         if not platform.gspro_running():
             if not path:
-                self._apply_health("gspro", "action_needed", "Choose your GSPro application in Connections, or open GSPro yourself")
+                self._apply_health("gspro", "action_needed", "Choose your GSPro application in Settings, or open GSPro yourself")
                 return
             try:
                 platform.launch_app(path)
@@ -390,7 +390,7 @@ class SessionController(QObject):
             self._owned_golf = platform.launch_app(self.store.data["fs_golf_path"])
             self.record("Opening FS Golf")
         except Exception as exc:
-            self._apply_health("mevo", "action_needed", f"Choose the FS Golf application in Connections: {exc}")
+            self._apply_health("mevo", "action_needed", f"Choose the FS Golf application in Settings: {exc}")
 
     def set_chipping(self, enabled):
         if self.chipping != bool(enabled):
@@ -494,7 +494,9 @@ class SessionController(QObject):
         if state not in {"submitted"}:
             self.recent_shots.appendleft({"time": datetime.now().strftime("%H:%M:%S"),
                                          "source": shot.source, "speed": shot.speed_mph,
-                                         "hla": shot.hla, "state": state, "message": message})
+                                         "hla": shot.hla, "vla": shot.vla, "spin_rpm": shot.spin_rpm,
+                                         "spin_axis": shot.spin_axis, "club_speed": shot.club_speed_mph,
+                                         "state": state, "message": message})
         context = self._submission_context.get(shot.event_id)
         if state == "accepted" and context and context["setup"] and context["generation"] == self._generation:
             key = context["validation_key"]

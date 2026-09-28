@@ -460,7 +460,7 @@ class AccessibilityAdapter:
                 return True
             if self._mode_attempts >= 3:
                 self._emit_status("needs_attention", "Choose " + ("Chipping" if target == "chipping" else "Full Swing")
-                                  + " in FS Golf, or turn off automatic chipping in Connections")
+                                  + " in FS Golf, or turn off automatic chipping in Settings")
                 return True
             self._mode_serial += 1
             request_id = f"{self._helper_epoch}:{self._mode_serial}"
