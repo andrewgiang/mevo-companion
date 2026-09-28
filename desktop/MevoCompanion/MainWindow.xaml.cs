@@ -288,9 +288,7 @@ public partial class MainWindow : Window
         else
         {
             (tone, title, pill) = (Tone.Idle, "Connecting…", "Connecting");
-            body = string.IsNullOrEmpty(club) && Text(_state["health"]?["gspro"]?["state"]) == "connected"
-                ? "Select your current club once in GSPro to enable shots."
-                : "Checking GSPro, FS Golf and your webcam. This takes a few seconds.";
+            body = "Checking GSPro, FS Golf and your webcam. This takes a few seconds.";
         }
         if (Demo) pill = "Preview mode";
         BannerTitle.Text = title;
@@ -322,7 +320,8 @@ public partial class MainWindow : Window
     {
         string club = Text(state["club"]);
         ClubText.Text = string.IsNullOrEmpty(club) ? "—" : club;
-        ModeText.Text = string.IsNullOrEmpty(club) ? (Flag(state["requested"]) ? "Select a club in GSPro" : "Not connected")
+        // Until GSPro reports a club, the companion assumes a full-swing club.
+        ModeText.Text = string.IsNullOrEmpty(club) && !Flag(state["requested"]) ? "Not connected"
             : club == "PT" ? "Webcam putting"
             : Text(state["shot_mode"]) switch { "chipping" => "Mevo+ · Chipping", "full_swing" => "Mevo+ · Full Swing", _ => "Mevo+" };
         double? distance = Decimal(state["distance_to_target_yards"]);
@@ -334,12 +333,13 @@ public partial class MainWindow : Window
     private static string ActiveSourceText(JsonObject state)
     {
         string club = Text(state["club"]);
-        if (string.IsNullOrEmpty(club)) return Flag(state["requested"]) ? "Waiting for GSPro's club selection" : "Ready when you are";
+        if (string.IsNullOrEmpty(club) && !Flag(state["requested"])) return "Ready when you are";
+        string suffix = string.IsNullOrEmpty(club) ? "" : " · " + club;
         string source = club == "PT" ? "Webcam putting active" : Text(state["shot_mode"]) switch
         {
-            "chipping" => $"Mevo+ · Chipping · {club}",
-            "full_swing" => $"Mevo+ · Full Swing · {club}",
-            _ => $"Mevo+ active · {club}",
+            "chipping" => "Mevo+ · Chipping" + suffix,
+            "full_swing" => "Mevo+ · Full Swing" + suffix,
+            _ => "Mevo+ active" + suffix,
         };
         if (Decimal(state["distance_to_target_yards"]) is { } distance && distance >= 0)
             source += "\n" + distance.ToString("0.#", Invariant) + " yd to target";

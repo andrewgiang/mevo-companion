@@ -129,7 +129,9 @@ class SessionController(QObject):
         self.event.emit(message)
 
     def snapshot(self):
-        source = "putting" if self.club == "PT" else "mevo" if self.club else None
+        # Until GSPro reports a club (it only does so on a change), assume a
+        # full-swing club so connecting is enough to play.
+        source = "putting" if self.club == "PT" else "mevo"
         active = self.health.get(source, {})
         ready = bool(self.live_enabled and self.health["gspro"]["state"] == "connected"
                      and source and active.get("state") == "ready"
@@ -154,8 +156,6 @@ class SessionController(QObject):
     @Slot(int, str, str, str)
     def _relay_health(self, generation, component, state, message):
         if generation == self._generation and not self._stopping:
-            if component == "mevo" and state == "standby" and not self.club:
-                state, message = "checking", "Waiting for GSPro's current club before enabling Mevo+"
             self._apply_health(component, state, message)
 
     @Slot(int, object)
@@ -358,7 +358,7 @@ class SessionController(QObject):
 
     def update_routing(self):
         if self.source and hasattr(self.source, "set_active"):
-            self.source.set_active(bool(self.club and self.club != "PT") or (self.setup_mode and not self.live_enabled))
+            self.source.set_active(self.club != "PT" or (self.setup_mode and not self.live_enabled))
         if self.putting:
             self.putting.set_active(self.club == "PT" or (self.setup_mode and not self.live_enabled))
 

@@ -43,12 +43,12 @@ def test_ready_status_follows_live_delivery_and_selected_source(controller):
     assert ready[-1] is False
 
 
-def test_unknown_club_does_not_claim_putter_is_selected(controller):
-    value, _, _ = controller
+def test_unknown_club_assumes_mevo_so_connecting_is_enough(controller):
+    value, ready, _ = controller
     value.club = ""
-    value._relay_health(value._generation, "mevo", "standby", "Putter selected")
-    assert value.health["mevo"]["state"] == "checking"
-    assert "current club" in value.health["mevo"]["message"]
+    value.publish()
+    assert ready[-1] is True
+    assert value.snapshot()["source"] == "mevo"
 
 
 def test_measurement_started_before_resume_is_not_forwarded(controller):
