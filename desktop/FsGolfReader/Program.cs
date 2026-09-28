@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -197,9 +198,77 @@ internal static partial class Program
             || !StartupLabelIs(target.Current.Name, label) || Stopwatch.GetElapsedTime(command.ReceivedAt).TotalSeconds > 5)
             return ModeReply(command, false, "FS Golf changed while preparing shot mode. Retry after the next Ready snapshot.");
         if (final.ShotMode == command.Mode) return ModeReply(command, true, "FS Golf already has the requested shot mode selected.");
+        IntPtr previousForeground = GetForegroundWindow();
         ((SelectionItemPattern)pattern).Select();
+        KeepForegroundAfterModeChange(previousForeground, current.Window.Pid);
         return ModeReply(command, true, "Selected " + label + "; waiting for the next snapshot to confirm the mode.");
     }
+
+    // FS Golf raises its own window when its shot mode changes, leaving GSPro
+    // behind it mid-round. Remember the window the golfer was using and hand
+    // focus back when FS Golf takes it; stop watching if they move elsewhere.
+    internal enum FocusStep { Wait, Restore, Stop }
+    private const long FocusWatchMs = 3000;
+    private const int MaxFocusRestores = 3;
+
+    internal static FocusStep NextFocusStep(IntPtr previous, IntPtr current, bool currentIsFsGolf, long elapsedMs) =>
+        elapsedMs >= FocusWatchMs ? FocusStep.Stop
+        : current == previous || current == IntPtr.Zero ? FocusStep.Wait
+        : currentIsFsGolf ? FocusStep.Restore : FocusStep.Stop;
+
+    private static void KeepForegroundAfterModeChange(IntPtr previous, int fsGolfPid)
+    {
+        if (previous == IntPtr.Zero || WindowProcessId(previous) == fsGolfPid) return;
+        var watcher = new Thread(() =>
+        {
+            // AttachThreadInput needs a message queue on this thread.
+            PeekMessage(out _, IntPtr.Zero, 0, 0, PmNoRemove);
+            var timer = Stopwatch.StartNew();
+            for (int restores = 0; restores < MaxFocusRestores;)
+            {
+                Thread.Sleep(50);
+                IntPtr current = GetForegroundWindow();
+                var step = NextFocusStep(previous, current, WindowProcessId(current) == fsGolfPid, timer.ElapsedMilliseconds);
+                if (step == FocusStep.Stop) return;
+                if (step == FocusStep.Restore) { RestoreForeground(previous, current); restores++; }
+            }
+        }) { IsBackground = true, Name = "Restore foreground after FS Golf mode change" };
+        watcher.Start();
+    }
+
+    private static void RestoreForeground(IntPtr target, IntPtr intruder)
+    {
+        if (!IsWindow(target)) return;
+        if (IsIconic(target)) ShowWindow(target, SwRestore);
+        // Windows lets only the foreground input queue move the foreground.
+        // Sharing FS Golf's queue for this call carries that permission over.
+        uint foregroundThread = GetWindowThreadProcessId(intruder, out _);
+        uint thisThread = GetCurrentThreadId();
+        bool attached = foregroundThread != 0 && foregroundThread != thisThread && AttachThreadInput(thisThread, foregroundThread, true);
+        try { BringWindowToTop(target); SetForegroundWindow(target); }
+        finally { if (attached) AttachThreadInput(thisThread, foregroundThread, false); }
+    }
+
+    private static int WindowProcessId(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero) return 0;
+        GetWindowThreadProcessId(hwnd, out uint pid);
+        return (int)pid;
+    }
+
+    private const int SwRestore = 9;
+    private const uint PmNoRemove = 0;
+    [StructLayout(LayoutKind.Sequential)] private struct NativeMessage { public IntPtr Hwnd; public uint Message; public UIntPtr WParam; public IntPtr LParam; public uint Time; public int X, Y; }
+    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern bool BringWindowToTop(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern bool IsWindow(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hwnd, int command);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+    [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint attach, uint attachTo, bool join);
+    [DllImport("user32.dll")] private static extern bool PeekMessage(out NativeMessage message, IntPtr hwnd, uint filterMin, uint filterMax, uint remove);
+    [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
 
     private static Snapshot EnsureLive()
     {
@@ -822,6 +891,17 @@ internal static partial class Program
             || resultJson.RootElement.GetProperty("request_id").GetString() != "duplicate-test")
             throw new InvalidOperationException("The command result JSON contract must retain snake_case fields.");
         commandTests++;
+        IntPtr golfer = new(0x100), fsGolf = new(0x200), elsewhere = new(0x300);
+        foreach (var (current, isFsGolf, elapsed, expected) in new[]
+        {
+            (golfer, false, 100L, FocusStep.Wait), (IntPtr.Zero, false, 100L, FocusStep.Wait),
+            (fsGolf, true, 100L, FocusStep.Restore), (elsewhere, false, 100L, FocusStep.Stop), (fsGolf, true, FocusWatchMs, FocusStep.Stop),
+        })
+        {
+            if (NextFocusStep(golfer, current, isFsGolf, elapsed) != expected)
+                throw new InvalidOperationException($"Focus regression: {current} at {elapsed} ms expected {expected}.");
+            commandTests++;
+        }
         Console.WriteLine(JsonSerializer.Serialize(new { success = true, tests = 78 + commandTests }, JsonOptions));
         return 0;
     }

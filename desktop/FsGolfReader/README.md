@@ -3,7 +3,8 @@
 This Windows UI Automation helper reads FS Golf PC 2's actual accessible values.
 It does not require screen rectangles or OCR. `--once` / `--watch` observations
 are read-only. Explicit startup and shot-mode commands act only through the
-supported native controls and never request focus or use coordinates.
+supported native controls and never request focus for FS Golf or use
+coordinates.
 
 ```text
 FsGolfReader.exe --once
@@ -89,6 +90,11 @@ window, current selection, modal state, sleep overlay, and radar Ready status
 immediately before one `SelectionItemPattern.Select` attempt. Tracking, Arming,
 Connected, Sleeping, review, unknown views, and dialogs do not permit a switch.
 An already selected mode succeeds without another selection action.
+
+FS Golf raises its own window when its mode changes. The helper records the
+foreground window (normally GSPro) just before selecting and, for three seconds
+afterwards, returns focus to it if FS Golf takes the foreground. It stops
+watching as soon as the golfer switches to any other window.
 
 Each response has `type="command_result"`, `request_id`, `success`, `mode`, and
 `message`. Success means the selection was issued or already matched; the next
