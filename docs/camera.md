@@ -58,6 +58,23 @@ existence alone never marks it healthy. Actual FPS and detection remain displaye
 by the original tracker. There is no external heartbeat or API for changing the
 stock tracker's exposure/calibration settings.
 
+## Camera exposure mode
+
+In MJPEG (DirectShow) mode, the stock tracker cannot keep a camera on auto
+exposure by itself. Its OpenCV 4.7 DirectShow backend can set
+`CAP_PROP_AUTO_EXPOSURE` but always reads it as `-1`. The tracker saves that value
+as `autoexposure = -1.0` and replays it at the next launch. DirectShow treats any
+value other than `1` as "switch to manual exposure", so the camera would leave
+auto exposure every time putting opened.
+
+Before each launch, the adapter reads the saved camera's current exposure mode
+through DirectShow's `IAMCameraControl`. This read does not open a video stream.
+When the camera is on auto exposure, the adapter sets `autoexposure = 1.0` so the
+tracker restores auto. When it is on manual exposure, the adapter keeps the stock
+manual value. No other setting is changed. If the mode can't be read, or the
+tracker uses Media Foundation (MJPEG off), the file is left untouched. Media
+Foundation already reads and restores the flag correctly.
+
 ## Verified on this development machine
 
 - Automated tests cover the HTTP contract, malformed input,
