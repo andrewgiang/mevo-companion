@@ -29,6 +29,7 @@ from cv2_enumerate_cameras import enumerate_cameras
 import psutil
 from PySide6.QtCore import QObject, QTimer, Signal
 
+from .camera_controls import directshow_auto_exposure, sync_stock_auto_exposure
 from .config import resource_path
 from .external_process import OwnedProcessJob, child_environment as stock_child_environment, launch_external
 from .models import Shot
@@ -379,6 +380,7 @@ class PuttingAdapter(QObject):
             device = resolve_camera(self.config, self.devices())
             self.config["camera_id"] = device["id"]
             command = self.build_command(device)
+            self._keep_exposure_mode(device)
             # Bind before launching: port conflicts must not start a second tracker.
             self._server.start()
             with self._lock:
@@ -402,6 +404,21 @@ class PuttingAdapter(QObject):
         except (ValueError, ConfigError) as exc:
             self._report("warning", str(exc))
         return False
+
+    def _keep_exposure_mode(self, device: dict) -> None:
+        # Stock DirectShow startup replays a saved autoexposure of -1, which turns
+        # the camera's auto exposure off every launch. Carry the camera's own mode.
+        if device.get("backend") != cv2.CAP_DSHOW or not device.get("stable"):
+            return
+        key = _device_key(device["id"])
+        auto = directshow_auto_exposure(lambda path: _device_key(path) == key)
+        if auto is None:
+            return
+        try:
+            if sync_stock_auto_exposure(self.config_path, auto):
+                LOG.info("Putting camera exposure stays %s at launch", "automatic" if auto else "manual")
+        except OSError as exc:
+            LOG.warning("Could not keep the putting camera's exposure mode: %s", exc)
 
     def _read_output(self, process: subprocess.Popen) -> None:
         if process.stdout is None:

@@ -267,6 +267,40 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.adapter.build_command(DEVICES[0])
 
+    def launch_with_camera_mode(self, config: str, device: dict, auto):
+        self.adapter._process = None
+        self.adapter._server = PuttingServer(lambda shot: None, port=0)
+        self.adapter.config_path.write_text(config)
+        launched = []
+
+        def launch(command, work_dir):
+            launched.append(self.adapter.config_path.read_text())
+            return SimpleNamespace(pid=1234, stdout=None, poll=lambda: None)
+
+        with patch("companion.putting_adapter.camera_devices", return_value=[device]), \
+                patch("companion.putting_adapter.directshow_auto_exposure", return_value=auto) as reader, \
+                patch("companion.putting_adapter.launch_stock_tracker", side_effect=launch), \
+                patch("companion.putting_adapter.OwnedProcessJob.try_attach", return_value=None):
+            self.assertTrue(self.adapter.start())
+        self.adapter._process = None  # Never let stop() look up the fake PID.
+        self.adapter.stop()
+        return launched[0], reader
+
+    def test_directshow_launch_keeps_camera_auto_exposure(self):
+        stock = "[putting]\nstartx1=10\nstartx2=180\ny1=180\ny2=450\nradius=8\nmjpeg=1\nexposure = 0.0\nautoexposure = -1.0\nautofocus = 1.0\n"
+        device = {"id": r"\\?\USB#ONE", "name": "HD USB Camera", "index": 2, "backend": cv2.CAP_DSHOW, "stable": True}
+        self.adapter.config["camera_id"] = device["id"]
+        launched, reader = self.launch_with_camera_mode(stock, device, True)
+        self.assertEqual(launched, stock.replace("autoexposure = -1.0", "autoexposure = 1.0"))
+        self.assertTrue(reader.call_args.args[0](r"\\?\usb#one"))
+
+    def test_unknown_or_non_directshow_exposure_mode_leaves_stock_settings(self):
+        stock = "[putting]\nstartx1=10\nstartx2=180\ny1=180\ny2=450\nradius=8\nmjpeg=0\nautoexposure = -1.0\n"
+        for device, auto in (({"id": "usb:one", "name": "Cam", "index": 2, "backend": cv2.CAP_MSMF, "stable": True}, True),
+                             ({"id": "usb:one", "name": "Cam", "index": 2, "backend": cv2.CAP_DSHOW, "stable": True}, None)):
+            with self.subTest(backend=device["backend"]):
+                self.assertEqual(self.launch_with_camera_mode(stock, device, auto)[0], stock)
+
     def test_import_keeps_existing_tuning_and_backs_up_previous_file(self):
         self.adapter._process = None
         content = "[putting]\nstartx1=10\nstartx2=180\ny1=180\ny2=450\nradius=13\nmjpeg=1\ncustomhsv={'hmin': 8,'hmax': 50,'smin': 20,'smax': 250,'vmin': 30,'vmax': 255}\n"
